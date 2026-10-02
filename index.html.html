@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>中一數學科 - 黃金(代數)礦工</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      background-color: #120904;
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      color: #fff;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: 600px;
+      max-height: 900px;
+      background: #2b170c;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.9);
+      overflow: hidden;
+      border: 4px solid #4a2813;
+    }
+
+    /* 頂部 UI */
+    .header-info {
+      position: absolute;
+      top: 10px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 0 12px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .stats-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .badge {
+      background: rgba(20, 10, 5, 0.85);
+      border: 2px solid #e2a843;
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-weight: bold;
+      font-size: 14px;
+      color: #ffeb99;
+      box-shadow: inset 0 0 5px rgba(0,0,0,0.8), 0 2px 5px rgba(0,0,0,0.5);
+      text-shadow: 1px 1px 2px #000;
+      white-space: nowrap;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .title-banner {
+      background: rgba(20, 10, 5, 0.75);
+      border: 1.5px solid #d4983b;
+      border-radius: 8px;
+      padding: 5px 10px;
+      text-align: right;
+    }
+
+    .title-banner h1 {
+      font-size: 13px;
+      color: #ffea79;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+      letter-spacing: 0.5px;
+      font-weight: 800;
+      margin: 0;
+    }
+
+    .audio-btn {
+      background: rgba(20, 10, 5, 0.85);
+      border: 2px solid #e2a843;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      color: #ffeb99;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.82);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .card {
+      background: #3a2212;
+      border: 4px solid #d4983b;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 440px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      text-align: center;
+      color: #fff;
+    }
+
+    .card h2 {
+      color: #ffd700;
+      font-size: 22px;
+      margin-bottom: 12px;
+      text-shadow: 1px 1px 3px #000;
+    }
+
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #633b1e;
+      font-size: 14px;
+    }
+
+    .stats-table th, .stats-table td {
+      padding: 8px 10px;
+      text-align: center;
+      border-bottom: 1px solid #4a2813;
+    }
+
+    .stats-table th {
+      background: #231208;
+      color: #e2a843;
+      font-weight: bold;
+    }
+
+    .stats-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .correct-val { color: #2ecc71; font-weight: bold; }
+    .wrong-val { color: #e74c3c; font-weight: bold; }
+
+    .instructions {
+      text-align: left;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #633b1e;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 15px;
+      color: #eed5b7;
+    }
+
+    .instructions ul {
+      padding-left: 18px;
+      margin-top: 5px;
+    }
+
+    .instructions li { margin-bottom: 4px; }
+
+    .input-group {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 14px;
+      color: #ffeb99;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 2px solid #d4983b;
+      background: #1f1007;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .start-btn {
+      background: linear-gradient(to bottom, #27ae60, #1e8449);
+      color: white;
+      border: none;
+      border-bottom: 4px solid #145a32;
+      padding: 12px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+
+    .start-btn:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+
+    .question-card {
+      background: #2a180e;
+      border: 4px solid #e09f3e;
+      border-radius: 18px;
+      width: 88%;
+      max-width: 400px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .card-header {
+      font-size: 15px;
+      font-weight: bold;
+      color: #ffd700;
+      margin-bottom: 8px;
+    }
+
+    .item-type-tag {
+      font-size: 13px;
+      font-weight: bold;
+      padding: 3px 10px;
+      border-radius: 12px;
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .question-body {
+      background: #170d07;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 18px;
+      border: 1px solid #523119;
+    }
+
+    .question-text {
+      font-size: 26px;
+      font-weight: bold;
+      color: #ffffff;
+      letter-spacing: 1px;
+    }
+
+    .math-var {
+      font-style: italic;
+      font-family: 'Times New Roman', Times, serif;
+      color: #ff6b6b;
+      padding: 0 2px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .option-btn {
+      background: #e67e22;
+      color: white;
+      border: none;
+      border-bottom: 4px solid #a8540d;
+      border-radius: 10px;
+      padding: 12px 5px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .option-btn:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+
+    .toast-msg {
+      position: absolute;
+      top: 35%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 200;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.4s ease;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .toast-msg.correct {
+      background: #2ecc71;
+      color: white;
+      opacity: 1;
+      transform: translate(-50%, -80%);
+    }
+
+    .toast-msg.wrong {
+      background: #e74c3c;
+      color: white;
+      opacity: 1;
+      transform: translate(-50%, -80%);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <div class="header-info">
+      <div class="stats-group">
+        <div class="badge" id="score-txt">💰 總金幣: 0</div>
+        <div class="badge" id="time-txt">⏳ 時間: 03:00</div>
+      </div>
+
+      <div class="header-right">
+        <div class="title-banner">
+          <h1>中一數學科 - 黃金(代數)礦工</h1>
+        </div>
+        <button class="audio-btn" id="audioToggle" onclick="toggleAudio()">🎵</button>
+      </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="modal-overlay active" id="guideModal">
+      <div class="card">
+        <h2>⛏️ 礦工指南 📜</h2>
+        <div class="instructions">
+          <p>歡迎來到代數礦坑！請在限時內解開數學題抓取金幣：</p>
+          <ul>
+            <li><b>⏳ 遊戲時限</b>：全程 <b>3 分鐘</b>。</li>
+            <li><b>🗿 灰石頭 (80金幣)</b>：一元一次方程基礎題。</li>
+            <li><b>🏆 黃金 (150金幣)</b>：同類項合併與跨項移項。</li>
+            <li><b>💎 藍寶石 (220金幣)</b>：帶括號展開與混合方程。</li>
+            <li><b>⚠️ 答錯懲罰</b>：扣除 10 秒時間！</li>
+          </ul>
+        </div>
+        <div class="input-group">
+          <label for="minerName">請輸入礦工名字：</label>
+          <input type="text" id="minerName" value="數學勇士" maxlength="10">
+        </div>
+        <button class="start-btn" onclick="confirmStartGame()">開始遊戲 🚀</button>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="questionModal">
+      <div class="question-card">
+        <div class="card-header">✨ 抓到寶藏了！解開代數鎖 ✨</div>
+        <div id="itemTag" class="item-type-tag">灰石頭</div>
+        <div class="question-body">
+          <div class="question-text" id="questionContent">x + 2 = -5</div>
+        </div>
+        <div class="options-grid" id="optionsGrid"></div>
+      </div>
+    </div>
+
+    <div class="toast-msg" id="toast">正確！+80金幣</div>
+
+    <div class="modal-overlay" id="endModal">
+      <div class="card">
+        <h2>🏆 3分鐘挖礦結算 📜</h2>
+        <p id="endDesc" style="font-size: 16px; margin-top: 5px; color: #ffeb99;"></p>
+        
+        <table class="stats-table">
+          <thead>
+            <tr>
+              <th>礦石類型</th>
+              <th>答對題數</th>
+              <th>答錯題數</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>🗿 灰石頭</td>
+              <td class="correct-val" id="rock-correct">0 題</td>
+              <td class="wrong-val" id="rock-wrong">0 題</td>
+            </tr>
+            <tr>
+              <td>🏆 黃金</td>
+              <td class="correct-val" id="gold-correct">0 題</td>
+              <td class="wrong-val" id="gold-wrong">0 題</td>
+            </tr>
+            <tr>
+              <td>💎 藍寶石</td>
+              <td class="correct-val" id="gem-correct">0 題</td>
+              <td class="wrong-val" id="gem-wrong">0 題</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <button class="start-btn" onclick="restartGame()">再挑戰一次 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 音效處理
+    let audioCtx = null;
+    let isAudioMuted = false;
+    let bgmInterval = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function toggleAudio() {
+      isAudioMuted = !isAudioMuted;
+      document.getElementById('audioToggle').innerText = isAudioMuted ? '🔇' : '🎵';
+      if (isAudioMuted) stopBGM();
+      else startBGM();
+    }
+
+    function playTone(freq, type, duration, vol = 0.1) {
+      if (isAudioMuted || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSound(effect) {
+      initAudio();
+      if (isAudioMuted) return;
+      if (effect === 'hook') playTone(150, 'sawtooth', 0.1, 0.05);
+      else if (effect === 'correct') {
+        playTone(523.25, 'sine', 0.1, 0.15);
+        setTimeout(() => playTone(659.25, 'sine', 0.1, 0.15), 100);
+        setTimeout(() => playTone(783.99, 'sine', 0.2, 0.15), 200);
+      } else if (effect === 'wrong') {
+        playTone(200, 'square', 0.15, 0.15);
+        setTimeout(() => playTone(150, 'square', 0.25, 0.15), 150);
+      }
+    }
+
+    function startBGM() {
+      if (bgmInterval || isAudioMuted) return;
+      const notes = [261.63, 329.63, 392.00, 329.63, 293.66, 349.23, 440.00, 349.23];
+      let step = 0;
+      bgmInterval = setInterval(() => {
+        if (!isAudioMuted && gameState !== 'PAUSED' && gameState !== 'GAME_OVER' && gameState !== 'NOT_STARTED') {
+          playTone(notes[step % notes.length], 'triangle', 0.2, 0.03);
+          step++;
+        }
+      }, 320);
+    }
+
+    function stopBGM() {
+      if (bgmInterval) {
+        clearInterval(bgmInterval);
+        bgmInterval = null;
+      }
+    }
+
+    // 全局變數
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let width, height;
+    let score = 0;
+    let timeLeft = 180;
+    let playerName = "數學勇士";
+    let timerInterval = null;
+    let gameState = 'NOT_STARTED';
+
+    let quizStats = {
+      rock: { correct: 0, wrong: 0 },
+      gold: { correct: 0, wrong: 0 },
+      gem:  { correct: 0, wrong: 0 }
+    };
+
+    const miner = { x: 0, y: 110 };
+    const hook = {
+      x: 0, y: 110,
+      angle: 0, angleSpeed: 0.02,
+      length: 35,
+      speed: 0, extendSpeed: 9, retractSpeed: 9,
+      caughtItem: null
+    };
+
+    let items = [];
+    let particles = [];
+    let itemIdCounter = 0;
+
+    // ==========================================
+    // 題目生成 logic (確保全為整數答案)
+    // ==========================================
+    function generateAlgebraQuestion(itemType) {
+      const vars = ['x', 'y', 'a', 'b', 'm', 'n'];
+      const v = vars[Math.floor(Math.random() * vars.length)];
+      const vHtml = `<span class="math-var">${v}</span>`;
+      
+      let questionHtml = '';
+      let correctAnswer = 0;
+      let wrongAnswers = [];
+      let tagText = '灰石頭';
+      let tagColor = '#7f8c8d';
+
+      if (itemType === 'rock') {
+        tagText = '灰石頭 (80金幣)';
+        tagColor = '#7f8c8d';
+        
+        const type = Math.floor(Math.random() * 4);
+        if (type === 0) { 
+          const a = Math.floor(Math.random() * 8) + 1;
+          const ans = - (Math.floor(Math.random() * 8) + 1);
+          const b = ans + a;
+          questionHtml = `${vHtml} + ${a} = ${b}`;
+          correctAnswer = ans;
+          wrongAnswers = [b + a, -ans, ans - 2];
+        } else if (type === 1) { 
+          const a = Math.floor(Math.random() * 8) + 2;
+          const b = - (Math.floor(Math.random() * 6) + 1);
+          const ans = a - b;
+          questionHtml = `${a} - ${vHtml} = ${b}`;
+          correctAnswer = ans;
+          wrongAnswers = [a + b, -ans, ans - a];
+        } else if (type === 2) { 
+          const a = Math.floor(Math.random() * 5) + 2;
+          const ans = Math.floor(Math.random() * 8) + 2;
+          const b = a * ans;
+          questionHtml = `${vHtml} × ${a} = ${b}`;
+          correctAnswer = ans;
+          wrongAnswers = [b + a, b - a, ans + 2];
+        } else { 
+          const a = Math.floor(Math.random() * 4) + 2;
+          const ans = Math.floor(Math.random() * 6) + 2;
+          const b = ans * a;
+          questionHtml = `${vHtml} ÷ ${a} = ${ans}`;
+          correctAnswer = b;
+          wrongAnswers = [ans, ans + a, b * a];
+        }
+
+      } else if (itemType === 'gold') {
+        tagText = '黃金 (150金幣)';
+        tagColor = '#d4983b';
+
+        const type = Math.floor(Math.random() * 3);
+        const ans = Math.floor(Math.random() * 8) + 1;
+
+        if (type === 0) {
+          const coeff1 = Math.floor(Math.random() * 4) + 3;
+          const target = (coeff1 - 1) * ans;
+          questionHtml = `${coeff1}${vHtml} - ${vHtml} = ${target}`;
+          correctAnswer = ans;
+          wrongAnswers = [ans + 2, ans - 1, target];
+        } else if (type === 1) {
+          const coeff1 = Math.floor(Math.random() * 4) + 2;
+          const target = (coeff1 + 1) * ans;
+          questionHtml = `${coeff1}${vHtml} = ${target} - ${vHtml}`;
+          correctAnswer = ans;
+          wrongAnswers = [ans + 3, ans - 2, target];
+        } else {
+          const c2 = Math.floor(Math.random() * 3) + 2;
+          const c1 = c2 + Math.floor(Math.random() * 3) + 1;
+          const const1 = Math.floor(Math.random() * 6) + 1;
+          const const2 = (c1 - c2) * ans - const1;
+          
+          if (const2 >= 0) {
+            questionHtml = `${c1}${vHtml} - ${const1} = ${c2}${vHtml} + ${const2}`;
+          } else {
+            questionHtml = `${c1}${vHtml} - ${const1} = ${c2}${vHtml} - ${Math.abs(const2)}`;
+          }
+          correctAnswer = ans;
+          wrongAnswers = [ans + 1, ans - 2, ans + 3];
+        }
+
+      } else if (itemType === 'gem') {
+        tagText = '藍色寶石 (220金幣)';
+        tagColor = '#2980b9';
+
+        const type = Math.floor(Math.random() * 2);
+        const ans = Math.floor(Math.random() * 6) + 1;
+
+        if (type === 0) {
+          // 形如 a(x + b) = c
+          const a = Math.floor(Math.random() * 3) + 2;
+          const b = Math.floor(Math.random() * 5) + 1;
+          const c = a * (ans + b);
+          questionHtml = `${a}(${vHtml} + ${b}) = ${c}`;
+          correctAnswer = ans;
+          wrongAnswers = [ans + 2, ans - 1, ans + b];
+        } else {
+          // 形如 a(x - b) = c * x + d
+          const a = Math.floor(Math.random() * 3) + 3; // 3 ~ 5
+          const c = Math.floor(Math.random() * 2) + 1; // 1 ~ 2
+          const b = Math.floor(Math.random() * 4) + 1;
+          const d = (a - c) * ans - a * b;
+          
+          if (d >= 0) {
+            questionHtml = `${a}(${vHtml} - ${b}) = ${c === 1 ? '' : c}${vHtml} + ${d}`;
+          } else {
+            questionHtml = `${a}(${vHtml} - ${b}) = ${c === 1 ? '' : c}${vHtml} - ${Math.abs(d)}`;
+          }
+          correctAnswer = ans;
+          wrongAnswers = [ans + 2, ans - 2, ans + 1];
+        }
+      }
+
+      // 產生 4 個唯一的整數選項
+      let options = [correctAnswer];
+      wrongAnswers.forEach(w => {
+        if (options.length < 4 && !options.includes(w) && w !== undefined) {
+          options.push(w);
+        }
+      });
+      while (options.length < 4) {
+        let dummy = correctAnswer + (options.length * 2 - 1);
+        if (!options.includes(dummy)) options.push(dummy);
+      }
+
+      options.sort(() => Math.random() - 0.5);
+
+      return {
+        itemType,
+        questionHtml,
+        correctAnswer,
+        options,
+        tagText,
+        tagColor
+      };
+    }
+
+    function resizeCanvas() {
+      const container = document.getElementById('game-container');
+      width = container.clientWidth;
+      height = container.clientHeight;
+      canvas.width = width;
+      canvas.height = height;
+      miner.x = width / 2;
+      hook.x = miner.x;
+    }
+
+    function initGame() {
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      canvas.addEventListener('pointerdown', () => {
+        initAudio();
+        if (gameState === 'SWINGING') {
+          gameState = 'EXTENDING';
+          hook.speed = hook.extendSpeed;
+          playSound('hook');
+        }
+      });
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function confirmStartGame() {
+      const input = document.getElementById('minerName').value.trim();
+      if (input) playerName = input;
+      document.getElementById('guideModal').classList.remove('active');
+      startGame();
+    }
+
+    function generateSingleItem() {
+      const rand = Math.random();
+      let selectedType;
+
+      if (rand < 6 / 11) {
+        selectedType = { type: 'rock', radius: 24, weight: 2, score: 80, color: '#888888' };
+      } else if (rand < 9 / 11) {
+        selectedType = { type: 'gold', radius: 28, weight: 4, score: 150, color: '#f39c12' };
+      } else {
+        selectedType = { type: 'gem', radius: 16, weight: 8, score: 220, color: '#3498db' };
+      }
+
+      const x = 40 + Math.random() * (width - 80);
+      const y = 220 + Math.random() * (height - 270);
+
+      return { x, y, ...selectedType, id: itemIdCounter++ };
+    }
+
+    function spawnInitialItems() {
+      items = [];
+      for (let i = 0; i < 18; i++) {
+        items.push(generateSingleItem());
+      }
+    }
+
+    function maintainItemCount() {
+      if (items.length < 12) {
+        items.push(generateSingleItem());
+      }
+    }
+
+    function startGame() {
+      score = 0;
+      timeLeft = 180;
+      gameState = 'SWINGING';
+      
+      quizStats = {
+        rock: { correct: 0, wrong: 0 },
+        gold: { correct: 0, wrong: 0 },
+        gem:  { correct: 0, wrong: 0 }
+      };
+
+      updateUI();
+      spawnInitialItems();
+      startBGM();
+
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (gameState !== 'PAUSED' && gameState !== 'GAME_OVER' && gameState !== 'NOT_STARTED') {
+          timeLeft--;
+          updateUI();
+          if (timeLeft <= 0) endGame();
+        }
+      }, 1000);
+    }
+
+    function restartGame() {
+      document.getElementById('endModal').classList.remove('active');
+      startGame();
+    }
+
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function updateUI() {
+      document.getElementById('score-txt').innerText = `💰 總金幣: ${score}`;
+      document.getElementById('time-txt').innerText = `⏳ 時間: ${formatTime(timeLeft)}`;
+    }
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, width, height);
+
+      drawBackground();
+      drawMiner();
+      updateHook();
+      drawHook();
+      drawItems();
+      updateParticles();
+      drawParticles();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    function drawBackground() {
+      ctx.fillStyle = '#2b170c';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = '#211007';
+      ctx.beginPath();
+      ctx.moveTo(0, 150);
+      ctx.lineTo(width * 0.4, 220);
+      ctx.lineTo(width * 0.3, 400);
+      ctx.lineTo(0, 350);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(width, 180);
+      ctx.lineTo(width * 0.6, 300);
+      ctx.lineTo(width * 0.7, 600);
+      ctx.lineTo(width, 500);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(0, 550);
+      ctx.lineTo(width * 0.5, 650);
+      ctx.lineTo(width * 0.2, height);
+      ctx.lineTo(0, height);
+      ctx.fill();
+
+      ctx.strokeStyle = '#150904';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(width * 0.4, 220);
+      ctx.lineTo(width * 0.6, 300);
+      ctx.lineTo(width * 0.5, 450);
+      ctx.lineTo(width * 0.8, 650);
+      ctx.stroke();
+
+      ctx.fillStyle = '#4d8322';
+      ctx.fillRect(0, 0, width, 110);
+      ctx.fillStyle = '#396317';
+      ctx.fillRect(0, 95, width, 15);
+
+      ctx.fillStyle = '#4d8322';
+      for (let i = 0; i < width; i += 20) {
+        ctx.beginPath();
+        ctx.arc(i + 10, 110, 12, 0, Math.PI);
+        ctx.fill();
+      }
+    }
+
+    function drawMiner() {
+      ctx.fillStyle = '#5c3a21';
+      ctx.fillRect(miner.x - 28, 80, 56, 30);
+      ctx.fillStyle = '#3a2212';
+      ctx.fillRect(miner.x - 22, 85, 44, 20);
+
+      ctx.fillStyle = '#e67e22';
+      ctx.fillRect(miner.x - 12, 55, 24, 25);
+
+      ctx.fillStyle = '#ffcc99';
+      ctx.beginPath();
+      ctx.arc(miner.x, 48, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(miner.x, 54, 10, 0, Math.PI);
+      ctx.fill();
+
+      ctx.fillStyle = '#f39c12';
+      ctx.beginPath();
+      ctx.arc(miner.x, 42, 14, Math.PI, 0);
+      ctx.fill();
+      ctx.fillRect(miner.x - 16, 41, 32, 4);
+    }
+
+    function updateHook() {
+      if (gameState === 'SWINGING') {
+        hook.angle += hook.angleSpeed;
+        if (hook.angle > 1.25 || hook.angle < -1.25) {
+          hook.angleSpeed = -hook.angleSpeed;
+        }
+        hook.x = miner.x + Math.sin(hook.angle) * hook.length;
+        hook.y = 110 + Math.cos(hook.angle) * hook.length;
+      } 
+      else if (gameState === 'EXTENDING') {
+        hook.length += hook.speed;
+        hook.x = miner.x + Math.sin(hook.angle) * hook.length;
+        hook.y = 110 + Math.cos(hook.angle) * hook.length;
+
+        if (hook.x < 15 || hook.x > width - 15 || hook.y > height - 20) {
+          gameState = 'RETRACTING';
+        }
+
+        for (let item of items) {
+          const dist = Math.hypot(hook.x - item.x, hook.y - item.y);
+          if (dist < item.radius + 8) {
+            hook.caughtItem = item;
+            gameState = 'RETRACTING';
+            hook.speed = Math.max(1.8, hook.retractSpeed - item.weight * 0.6);
+            break;
+          }
+        }
+      } 
+      else if (gameState === 'RETRACTING') {
+        hook.length -= hook.speed;
+        if (hook.length <= 35) {
+          hook.length = 35;
+          gameState = 'SWINGING';
+
+          if (hook.caughtItem) {
+            gameState = 'PAUSED';
+            openQuestionModal(hook.caughtItem.type);
+          }
+        }
+        hook.x = miner.x + Math.sin(hook.angle) * hook.length;
+        hook.y = 110 + Math.cos(hook.angle) * hook.length;
+
+        if (hook.caughtItem) {
+          hook.caughtItem.x = hook.x;
+          hook.caughtItem.y = hook.y + hook.caughtItem.radius / 2;
+        }
+      }
+    }
+
+    function drawHook() {
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(miner.x, 110);
+      ctx.lineTo(hook.x, hook.y);
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(hook.x, hook.y);
+      ctx.rotate(-hook.angle);
+
+      ctx.strokeStyle = '#d0d0d0';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(-8, 8, 10, 0, Math.PI / 2);
+      ctx.arc(8, 8, 10, Math.PI / 2, Math.PI);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawItems() {
+      items.forEach(item => {
+        ctx.save();
+        ctx.translate(item.x, item.y);
+
+        if (item.type === 'gold') {
+          const r = item.radius;
+          ctx.fillStyle = '#ffae00';
+          ctx.strokeStyle = '#7a4300';
+          ctx.lineWidth = 3;
+
+          ctx.beginPath();
+          ctx.moveTo(-r*0.6, -r*0.8);
+          ctx.lineTo(r*0.3, -r);
+          ctx.lineTo(r*0.9, -r*0.4);
+          ctx.lineTo(r, r*0.6);
+          ctx.lineTo(0, r);
+          ctx.lineTo(-r*0.9, r*0.4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#fff3a1';
+          ctx.beginPath();
+          ctx.moveTo(-r*0.6, -r*0.8);
+          ctx.lineTo(0, -r*0.4);
+          ctx.lineTo(-r*0.3, 0);
+          ctx.lineTo(-r*0.9, r*0.4);
+          ctx.closePath();
+          ctx.fill();
+
+        } else if (item.type === 'rock') {
+          const r = item.radius;
+          ctx.fillStyle = '#95a5a6';
+          ctx.strokeStyle = '#34495e';
+          ctx.lineWidth = 3;
+
+          ctx.beginPath();
+          ctx.arc(0, 0, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#7f8c8d';
+          ctx.beginPath();
+          ctx.arc(-r*0.3, -r*0.2, r*0.2, 0, Math.PI * 2);
+          ctx.arc(r*0.3, r*0.3, r*0.15, 0, Math.PI * 2);
+          ctx.arc(r*0.1, -r*0.4, r*0.12, 0, Math.PI * 2);
+          ctx.fill();
+
+        } else if (item.type === 'gem') {
+          const r = item.radius;
+          ctx.fillStyle = '#3498db';
+          ctx.strokeStyle = '#1b4f72';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, -r);
+          ctx.lineTo(r, -r * 0.3);
+          ctx.lineTo(0, r);
+          ctx.lineTo(-r, -r * 0.3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#d4efdf';
+          ctx.beginPath();
+          ctx.moveTo(0, -r);
+          ctx.lineTo(r*0.4, -r*0.3);
+          ctx.lineTo(0, 0);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        ctx.restore();
+      });
+    }
+
+    function createParticleExplosion(x, y) {
+      for (let i = 0; i < 15; i++) {
+        particles.push({
+          x, y,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8 - 2,
+          radius: Math.random() * 5 + 3,
+          color: '#ffd700',
+          life: 25
+        });
+      }
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.2;
+        p.life--;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+    }
+
+    function drawParticles() {
+      particles.forEach(p => {
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    let currentQuestionData = null;
+
+    function openQuestionModal(itemType) {
+      const modal = document.getElementById('questionModal');
+      const qText = document.getElementById('questionContent');
+      const tag = document.getElementById('itemTag');
+      const optionsGrid = document.getElementById('optionsGrid');
+
+      currentQuestionData = generateAlgebraQuestion(itemType);
+
+      qText.innerHTML = currentQuestionData.questionHtml;
+      tag.innerText = currentQuestionData.tagText;
+      tag.style.backgroundColor = currentQuestionData.tagColor;
+      tag.style.color = '#fff';
+
+      optionsGrid.innerHTML = '';
+
+      currentQuestionData.options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerHTML = (typeof opt === 'string') ? opt.replace(/([a-zA-Z])/g, '<span class="math-var">$1</span>') : opt;
+        btn.onclick = () => handleAnswer(opt);
+        optionsGrid.appendChild(btn);
+      });
+
+      modal.classList.add('active');
+    }
+
+    function handleAnswer(selectedOption) {
+      const modal = document.getElementById('questionModal');
+      modal.classList.remove('active');
+
+      const type = currentQuestionData.itemType;
+
+      if (selectedOption === currentQuestionData.correctAnswer) {
+        playSound('correct');
+        const gainedScore = hook.caughtItem ? hook.caughtItem.score : 80;
+        score += gainedScore;
+        
+        if (quizStats[type]) quizStats[type].correct++;
+
+        showToast(`正確！ +${gainedScore} 金幣`, true);
+        createParticleExplosion(miner.x, 120);
+
+        if (hook.caughtItem) {
+          items = items.filter(it => it.id !== hook.caughtItem.id);
+        }
+      } else {
+        playSound('wrong');
+        timeLeft = Math.max(0, timeLeft - 10);
+
+        if (quizStats[type]) quizStats[type].wrong++;
+
+        showToast(`答錯了！時間 -10秒`, false);
+      }
+
+      hook.caughtItem = null;
+      updateUI();
+      maintainItemCount();
+
+      if (timeLeft > 0) gameState = 'SWINGING';
+      else endGame();
+    }
+
+    function showToast(msg, isCorrect) {
+      const toast = document.getElementById('toast');
+      toast.innerText = msg;
+      toast.className = `toast-msg ${isCorrect ? 'correct' : 'wrong'}`;
+      setTimeout(() => {
+        toast.className = 'toast-msg';
+      }, 1200);
+    }
+
+    function endGame() {
+      gameState = 'GAME_OVER';
+      clearInterval(timerInterval);
+      stopBGM();
+
+      const endDesc = document.getElementById('endDesc');
+      endDesc.innerHTML = `礦工 <b>${playerName}</b> 最終得分：<b style="color:#ffd700; font-size:20px;">${score}</b> 金幣`;
+
+      document.getElementById('rock-correct').innerText = `${quizStats.rock.correct} 題`;
+      document.getElementById('rock-wrong').innerText = `${quizStats.rock.wrong} 題`;
+
+      document.getElementById('gold-correct').innerText = `${quizStats.gold.correct} 題`;
+      document.getElementById('gold-wrong').innerText = `${quizStats.gold.wrong} 題`;
+
+      document.getElementById('gem-correct').innerText = `${quizStats.gem.correct} 題`;
+      document.getElementById('gem-wrong').innerText = `${quizStats.gem.wrong} 題`;
+
+      document.getElementById('endModal').classList.add('active');
+    }
+
+    window.onload = initGame;
+  </script>
+</body>
+</html>
